@@ -181,6 +181,7 @@
       <div class="links">
         <a href="#idea">The idea</a>
         <a href="#paper">Paper details</a>
+        <a href="#reading-guide">Reading guide</a>
         <a href="#simulator">Simulator</a>
         <a href="#implications">Implications</a>
       </div>
@@ -284,6 +285,54 @@
         <div class="eq"><b>L = Cₘ / m<sup>αₘ</sup> + L<sub>∞</sub></b><span>Separate model-width-dependent loss from irreducible/data/dataset terms.</span></div>
         <div class="eq"><b>E[(wᵢ·wⱼ)²] ≈ 1/m</b><span>Core geometric reason strong superposition predicts smooth width scaling.</span></div>
         <div class="eq"><b>m ≈ vocab ⇒ flattening</b><span>A naive stopping point: when private token directions become possible, overlap-limited gains should diminish.</span></div>
+      </div>
+    </section>
+
+
+    <section id="reading-guide">
+      <h2 class="section-title">More from the original paper.</h2>
+      <p class="section-copy">Pulled closer to the source, this is the paper’s argument in the order you would meet it in the text: definition, controlled toy world, scaling regimes, then the real-LLM check.</p>
+      <div class="paper-grid">
+        <article class="paper-card">
+          <h3>1. What “features” mean here</h3>
+          <p>The paper treats inputs as sparse combinations of latent features. A model succeeds when it can assign each active feature a representation vector that can later be decoded. Superposition begins when there are more useful features than available dimensions.</p>
+          <ul>
+            <li><strong>Feature frequency pᵢ:</strong> how often a feature appears in the data.</li>
+            <li><strong>Activation density E:</strong> expected active features per example.</li>
+            <li><strong>Representation loss:</strong> error from not cleanly storing/reconstructing those features.</li>
+          </ul>
+        </article>
+        <article class="paper-card">
+          <h3>2. The weight-decay dial</h3>
+          <p>A useful experimental trick: the authors change decoupled weight decay to force different representational behaviors. Positive decay penalizes feature-vector norms and encourages dropping low-frequency features. Negative decay encourages many vectors to stay “on,” creating strong superposition.</p>
+          <p>This lets them vary the degree of superposition without changing the data distribution itself.</p>
+        </article>
+        <article class="paper-card">
+          <h3>3. Why weak scaling is fragile</h3>
+          <p>In weak superposition, the model is basically doing triage: store the common features and ignore the long tail. The loss is the remaining probability mass in that tail. A clean power law appears only if the tail probabilities already have the right shape.</p>
+          <p class="note">That is the “power law in, power law out” diagnosis.</p>
+        </article>
+        <article class="paper-card">
+          <h3>4. Why strong scaling is robust</h3>
+          <p>In strong superposition, most features are represented, so the dominant failure is not absence — it is interference. In high dimensions, random-ish vectors become nearly orthogonal. The average squared dot product shrinks like 1/m, so increasing width directly reduces overlap noise.</p>
+          <p class="note">This is the paper’s central mechanistic bridge from geometry to neural scaling.</p>
+        </article>
+        <article class="paper-card">
+          <h3>5. Synthetic distributions tested</h3>
+          <p>The authors test several feature-frequency shapes — power-law, exponential, and linear-like distributions. Weak superposition only gives power-law loss when the data distribution cooperates. Strong superposition gives inverse-width scaling much more generally.</p>
+        </article>
+        <article class="paper-card">
+          <h3>6. What they measure in real LLMs</h3>
+          <p>They inspect rows of the unembedding / language-model head as token representation vectors. The key measurement is how normalized overlaps between rows shrink with model dimension. Across GPT-2, OPT, Pythia, and Qwen2.5 families, the slope is close to the strong-superposition prediction.</p>
+        </article>
+        <article class="paper-card">
+          <h3>7. Chinchilla connection</h3>
+          <p>The paper compares this width-based mechanism with Chinchilla-style scaling laws. The reported Chinchilla-derived width exponent is close to one, consistent with overlap-limited representation loss.</p>
+        </article>
+        <article class="paper-card">
+          <h3>8. Where the spell breaks</h3>
+          <p>The authors expect this mechanism to stop dominating once representation width is large enough to allocate clean directions to the relevant feature set. After that, other bottlenecks — data, depth, optimization, parsing/computation — should become the main battlefield.</p>
+        </article>
       </div>
     </section>
 
