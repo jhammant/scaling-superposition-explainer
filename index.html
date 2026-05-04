@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Superposition Yields Robust Neural Scaling — Interactive Explainer</title>
+  <meta name="description" content="Interactive paper explainer for Superposition Yields Robust Neural Scaling by Yizhou Liu, Ziming Liu, and Jeff Gore." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <nav>
+      <div class="brand"><span class="dot"></span> Superposition Scaling</div>
+      <div class="nav-links">
+        <a href="#paper-map">Paper map</a>
+        <a href="#interactive">Simulator</a>
+        <a href="#sources">Sources</a>
+      </div>
+    </nav>
+    <section class="hero-grid">
+      <div>
+        <p class="eyebrow">Interactive explainer for arXiv:2505.10465</p>
+        <h1>Why does scaling language models work so reliably?</h1>
+        <p class="lede">The paper’s answer is surprisingly geometric: models represent more features than they have dimensions, so meanings live in <strong>superposition</strong>. When that superposition is strong, error is dominated by vector overlap noise — and that noise falls roughly like <strong>1 / width</strong>.</p>
+        <div class="actions">
+          <a class="button primary" href="#interactive">Try the simulator</a>
+          <a class="button" href="#paper-map">Walk the paper</a>
+        </div>
+      </div>
+      <div class="hero-card" aria-label="Summary card">
+        <span class="card-kicker">Core claim</span>
+        <div class="formula">L<sub>rep</sub> ∝ 1 / m</div>
+        <p>In strong superposition, representation loss decreases inversely with hidden dimension <em>m</em>, across many feature-frequency distributions.</p>
+        <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section id="paper-map" class="section">
+      <p class="eyebrow">Paper map</p>
+      <h2>The original paper in five moves</h2>
+      <div class="timeline">
+        <article>
+          <span>1</span>
+          <h3>The puzzle</h3>
+          <p>Neural scaling laws say larger models get lower loss in clean power-law patterns. But why should such a simple curve emerge from messy language data and huge transformers?</p>
+        </article>
+        <article>
+          <span>2</span>
+          <h3>The bottleneck</h3>
+          <p>LLMs need to represent tens of thousands of tokens — and likely many more abstract concepts — inside hidden spaces with only thousands of dimensions.</p>
+        </article>
+        <article>
+          <span>3</span>
+          <h3>The toy model</h3>
+          <p>The authors adapt Anthropic’s toy model of superposition: sparse latent features are encoded into a lower-dimensional space and reconstructed through a learned matrix.</p>
+        </article>
+        <article>
+          <span>4</span>
+          <h3>The regime split</h3>
+          <p>Weak superposition drops rare features; strong superposition keeps many/all features but lets their vectors overlap. Those two worlds scale differently.</p>
+        </article>
+        <article>
+          <span>5</span>
+          <h3>The LLM check</h3>
+          <p>Output layers of OPT, GPT-2, Qwen2.5, and Pythia look like the strong-superposition regime, with overlap-driven loss close to inverse-width scaling.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split">
+      <div>
+        <p class="eyebrow">The intuition</p>
+        <h2>There are too many meanings and too little room.</h2>
+        <p>If a model had one independent dimension per feature, life would be easy: each feature could get a clean axis. LLMs do not have that luxury. A 50k-token vocabulary may be projected through a few thousand hidden dimensions, and the true feature set is probably larger than the vocabulary.</p>
+        <p>Superposition is the workaround: instead of assigning one axis per concept, the model packs many concepts into shared directions. The price is interference. The paper argues that, in today’s LLMs, that interference is not a nuisance around the edges — it is a central scaling mechanism.</p>
+      </div>
+      <div class="diagram-card">
+        <div class="space-box">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <p><strong>More vectors than dimensions.</strong> Most pairs are almost orthogonal, but not perfectly. The leftover squared overlaps create predictable reconstruction error.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <p class="eyebrow">Methods, translated</p>
+      <h2>The toy model is a pressure chamber for representations.</h2>
+      <div class="cards three">
+        <article>
+          <span class="num">x</span>
+          <h3>Sparse feature data</h3>
+          <p>Each input is a vector of <em>n</em> latent features. Feature <em>i</em> activates with probability <em>pᵢ</em>, so features can be uniform, exponential, power-law, or otherwise skewed.</p>
+        </article>
+        <article>
+          <span class="num">W</span>
+          <h3>Compressed representation</h3>
+          <p>A learned matrix <em>W ∈ ℝⁿˣᵐ</em> maps those features into a hidden space with <em>m ≪ n</em>. Each row of <em>W</em> is the representation vector for one feature.</p>
+        </article>
+        <article>
+          <span class="num">L</span>
+          <h3>Reconstruction loss</h3>
+          <p>The model encodes and decodes the input, then measures reconstruction loss. Imperfect representation becomes a clean object to study.</p>
+        </article>
+      </div>
+      <div class="callout">
+        <strong>Translation:</strong> the toy model strips away transformer details so you can ask one question: how does loss change when a crowded representation space gets wider?
+      </div>
+    </section>
+
+    <section class="section split alt">
+      <div>
+        <p class="eyebrow">Two scaling stories</p>
+        <h2>Weak superposition is data-dependent. Strong superposition is geometric.</h2>
+        <p>The paper’s key contrast is not “superposition or no superposition.” It is <strong>weak</strong> versus <strong>strong</strong> superposition.</p>
+      </div>
+      <div class="compare">
+        <article>
+          <h3>Weak superposition</h3>
+          <p class="tag bad">Drop the tail</p>
+          <p>The model represents the most frequent features cleanly and ignores rarer ones. Loss depends heavily on the feature-frequency distribution. Power-law data can create power-law loss; other distributions need not.</p>
+        </article>
+        <article>
+          <h3>Strong superposition</h3>
+          <p class="tag good">Pack everything</p>
+          <p>The model represents many or all features with nonzero overlaps. Loss mostly comes from squared vector overlaps, which shrink like <em>1 / m</em> for high-dimensional geometry.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="interactive" class="section interactive">
+      <div class="panel intro-panel">
+        <p class="eyebrow">Interactive toy model</p>
+        <h2>Watch overlap error shrink as width grows.</h2>
+        <p>This is an intuition simulator, not a reproduction of the MIT experiments. It shows the paper’s two error stories: dropped-tail error in weak superposition vs overlap error in strong superposition.</p>
+      </div>
+
+      <div class="sim-grid">
+        <div class="panel controls">
+          <label>
+            Model width <output id="widthOut">512</output>
+            <input id="width" type="range" min="64" max="8192" value="512" step="64" />
+          </label>
+          <label>
+            Number of features <output id="conceptOut">32000</output>
+            <input id="concepts" type="range" min="1000" max="100000" value="32000" step="1000" />
+          </label>
+          <label>
+            Frequency skew <output id="skewOut">0.90</output>
+            <input id="skew" type="range" min="0.2" max="1.6" value="0.9" step="0.05" />
+          </label>
+          <label>
+            Superposition strength <output id="strengthOut">0.85</output>
+            <input id="strength" type="range" min="0" max="1" value="0.85" step="0.01" />
+          </label>
+        </div>
+
+        <div class="panel chart-panel">
+          <canvas id="chart" width="900" height="520" aria-label="Scaling chart"></canvas>
+          <div class="legend">
+            <span><i class="strong"></i> strong superposition</span>
+            <span><i class="weak"></i> weak superposition</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <article>
+          <span class="label">Strong-superposition error</span>
+          <strong id="strongMetric">—</strong>
+          <small>Overlap noise falls like ~1 / width.</small>
+        </article>
+        <article>
+          <span class="label">Weak-superposition error</span>
+          <strong id="weakMetric">—</strong>
+          <small>Dropped-tail error depends on frequency skew.</small>
+        </article>
+        <article>
+          <span class="label">Room pressure</span>
+          <strong id="pressureMetric">—</strong>
+          <small>Features per dimension.</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <p class="eyebrow">What the paper reports</p>
+      <h2>Actual LLMs match the strong-superposition picture.</h2>
+      <div class="evidence-grid">
+        <article>
+          <h3>Model families</h3>
+          <p>The authors analyze four open-source families: OPT, GPT-2, Qwen2.5, and Pythia, spanning roughly 100M to 70B parameters.</p>
+        </article>
+        <article>
+          <h3>Where they look</h3>
+          <p>They focus on the language-model head / output-layer representation vectors, where many token representations must fit inside the model dimension.</p>
+        </article>
+        <article>
+          <h3>What they measure</h3>
+          <p>They estimate representation overlap, vector norms, token frequencies, and evaluation loss to compare real models with toy-model predictions.</p>
+        </article>
+        <article>
+          <h3>Main quantitative fit</h3>
+          <p>The reported overlap-loss exponent is about 0.91, close to the theoretical inverse-width exponent of 1. Chinchilla-style scaling is also reported as consistent, around 0.88.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section implications">
+      <p class="eyebrow">Implications and limits</p>
+      <h2>What changes if this is right?</h2>
+      <ul>
+        <li><strong>Scaling has a mechanistic story:</strong> bigger models reduce representation interference, not just memorize more or fit smoother functions.</li>
+        <li><strong>Packing quality matters:</strong> architectures or training methods that reduce harmful overlap could improve performance at fixed compute.</li>
+        <li><strong>Interpretability stays hard:</strong> concepts are not stored as clean independent neurons or axes; they are entangled in shared directions.</li>
+        <li><strong>There may be a regime change:</strong> once representation is no longer the bottleneck, the clean inverse-width story may stop dominating.</li>
+        <li><strong>It is not the whole LLM:</strong> the toy model isolates representation learning. Transformer-layer skills, data quality, optimization, and compute still matter.</li>
+      </ul>
+    </section>
+
+    <section id="sources" class="section sources">
+      <p class="eyebrow">Sources</p>
+      <h2>Built from the paper, with light synthesis</h2>
+      <p>Primary source: <a href="https://arxiv.org/abs/2505.10465">arXiv:2505.10465 — “Superposition Yields Robust Neural Scaling”</a> by Yizhou Liu, Ziming Liu, and Jeff Gore, MIT.</p>
+      <p>Code source cited by the authors: <a href="https://github.com/liuyz0/SuperpositionScaling">liuyz0/SuperpositionScaling</a>.</p>
+      <p>Background framing also cross-checked against the earlier summary from <a href="https://the-decoder.com/mit-study-explains-why-scaling-language-models-works-so-reliably/">The Decoder</a>.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Static explainer. No tracking. Made for quick paper comprehension.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
