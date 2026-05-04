@@ -187,7 +187,7 @@
     </nav>
     <div class="hero">
       <div>
-        <div class="pill">MIT / NeurIPS 2025 paper · arXiv:2505.10465</div>
+        <div class="pill">MIT / NeurIPS 2025 paper · arXiv:2505.10465 v4</div>
         <h1>Why bigger language models get better <span class="gradient">so reliably</span></h1>
         <p class="lede">The short version: models pack more features than they have dimensions. That crowding creates predictable interference. Add width, reduce the interference, lower the loss.</p>
         <div class="cta-row">
@@ -281,7 +281,7 @@
         </article>
       </div>
       <div class="equation-strip">
-        <div class="eq"><b>L = Cₘ / m<sup>αₘ</sup> + L\m</b><span>Separate model-width-dependent loss from irreducible/data/dataset terms.</span></div>
+        <div class="eq"><b>L = Cₘ / m<sup>αₘ</sup> + L<sub>∞</sub></b><span>Separate model-width-dependent loss from irreducible/data/dataset terms.</span></div>
         <div class="eq"><b>E[(wᵢ·wⱼ)²] ≈ 1/m</b><span>Core geometric reason strong superposition predicts smooth width scaling.</span></div>
         <div class="eq"><b>m ≈ vocab ⇒ flattening</b><span>A naive stopping point: when private token directions become possible, overlap-limited gains should diminish.</span></div>
       </div>
@@ -340,7 +340,7 @@
   </main>
 
   <footer id="sources">
-    <strong>Sources:</strong> Yizhou Liu, Ziming Liu, and Jeff Gore, “<a href="https://arxiv.org/abs/2505.10465">Superposition Yields Robust Neural Scaling</a>” (arXiv:2505.10465; NeurIPS 2025 Best Paper Runner-up), the authors' <a href="https://github.com/liuyz0/SuperpositionScaling">code repository</a>, and The Decoder article “MIT study explains why scaling language models works so reliably.” This app is an explanatory abstraction, not a substitute for the paper's formal derivations.
+    <strong>Sources:</strong> Yizhou Liu, Ziming Liu, and Jeff Gore, “<a href="https://arxiv.org/abs/2505.10465">Superposition Yields Robust Neural Scaling</a>” (arXiv:2505.10465; NeurIPS 2025 Best Paper Runner-up), the authors' <a href="https://github.com/liuyz0/SuperpositionScaling">code repository</a>, and The Decoder article “MIT study explains why scaling language models works so reliably.” This app tracks the v4 arXiv version and is an explanatory abstraction, not a substitute for the paper's formal derivations.
   </footer>
 
   <script>
