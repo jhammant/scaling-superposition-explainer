@@ -3,235 +3,469 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Superposition Yields Robust Neural Scaling — Interactive Explainer</title>
-  <meta name="description" content="Interactive paper explainer for Superposition Yields Robust Neural Scaling by Yizhou Liu, Ziming Liu, and Jeff Gore." />
-  <link rel="stylesheet" href="styles.css" />
+  <title>Why Scaling Language Models Works</title>
+  <meta name="description" content="An interactive explainer of the MIT superposition account of neural scaling laws." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081018;
+      --panel: rgba(255,255,255,.075);
+      --panel-2: rgba(255,255,255,.12);
+      --text: #edf7ff;
+      --muted: #9db2c2;
+      --cyan: #63e8ff;
+      --violet: #b088ff;
+      --green: #93f5b5;
+      --amber: #ffd36d;
+      --pink: #ff79c6;
+      --red: #ff8b8b;
+      --line: rgba(255,255,255,.17);
+      --shadow: 0 24px 80px rgba(0,0,0,.35);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(99,232,255,.25), transparent 30rem),
+        radial-gradient(circle at 80% 10%, rgba(176,136,255,.22), transparent 28rem),
+        linear-gradient(145deg, #081018 0%, #0c1622 45%, #11101f 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .12;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+
+    header, main, footer { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 64px 0 26px; }
+    nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 48px;
+    }
+    .brand { display: flex; gap: 10px; align-items: center; color: var(--muted); font-weight: 700; }
+    .mark {
+      width: 34px; height: 34px; border-radius: 12px;
+      background: conic-gradient(from 220deg, var(--cyan), var(--violet), var(--green), var(--cyan));
+      box-shadow: 0 0 32px rgba(99,232,255,.25);
+    }
+    .links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .links a, .pill {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      text-decoration: none;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 34px;
+      align-items: center;
+    }
+    h1 {
+      font-size: clamp(42px, 7vw, 88px);
+      line-height: .92;
+      margin: 0 0 22px;
+      letter-spacing: -.07em;
+    }
+    .gradient { background: linear-gradient(90deg, var(--cyan), var(--violet), var(--green)); -webkit-background-clip: text; color: transparent; }
+    .lede { color: #c8d8e5; font-size: clamp(18px, 2.1vw, 24px); line-height: 1.45; max-width: 720px; margin: 0 0 24px; }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 12px 16px; border-radius: 14px;
+      background: var(--text); color: #071018; text-decoration: none; font-weight: 800;
+      box-shadow: 0 16px 50px rgba(99,232,255,.13);
+    }
+    .button.secondary { background: rgba(255,255,255,.09); color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+
+    .hero-card, .card, .simulator, .story-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.055));
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+    .hero-card { padding: 24px; position: relative; min-height: 420px; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 270px; border-radius: 22px; background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.08); }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+    .metric { padding: 14px; border-radius: 18px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.08); }
+    .metric b { display: block; font-size: 24px; letter-spacing: -.04em; }
+    .metric span { color: var(--muted); font-size: 12px; }
+
+    section { padding: 54px 0; }
+    .section-title { font-size: clamp(30px, 4vw, 54px); line-height: 1; letter-spacing: -.055em; margin: 0 0 14px; }
+    .section-copy { color: var(--muted); max-width: 760px; font-size: 18px; line-height: 1.6; margin: 0 0 24px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 22px; min-height: 210px; }
+    .card .icon { font-size: 34px; margin-bottom: 12px; }
+    .card h3 { margin: 0 0 10px; font-size: 21px; letter-spacing: -.03em; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+    .paper-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .paper-card { padding: 22px; border-radius: 24px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.09); }
+    .paper-card h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: -.035em; }
+    .paper-card p, .paper-card li { color: var(--muted); line-height: 1.55; }
+    .paper-card ul { margin: 12px 0 0; padding-left: 18px; }
+    .equation-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+    .eq { padding: 18px; border-radius: 20px; background: rgba(0,0,0,.24); border: 1px solid rgba(255,255,255,.08); }
+    .eq b { display:block; font-size: clamp(24px, 3vw, 36px); letter-spacing: -.05em; color: var(--green); margin-bottom: 6px; }
+    .eq span { color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .story { display: grid; grid-template-columns: .95fr 1.05fr; gap: 16px; align-items: stretch; }
+    .story-card { padding: 24px; }
+    .timeline { display: grid; gap: 12px; }
+    .step { display: grid; grid-template-columns: 46px 1fr; gap: 14px; align-items: start; padding: 16px; border-radius: 20px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.08); }
+    .num { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-weight: 900; background: rgba(99,232,255,.15); color: var(--cyan); }
+    .step h3 { margin: 0 0 6px; font-size: 18px; }
+    .step p { margin: 0; color: var(--muted); line-height: 1.5; }
+
+    .simulator { padding: 24px; }
+    .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 18px 0; }
+    label { color: var(--muted); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+    input[type="range"] { width: 100%; accent-color: var(--cyan); }
+    .readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .readout div { padding: 14px; border-radius: 16px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.08); }
+    .readout strong { display: block; font-size: 22px; letter-spacing: -.04em; }
+    .readout span { color: var(--muted); font-size: 12px; }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .regime { padding: 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.055); }
+    .regime.active { border-color: rgba(99,232,255,.6); box-shadow: inset 0 0 0 1px rgba(99,232,255,.25), 0 0 35px rgba(99,232,255,.08); }
+    .regime h3 { margin: 0 0 8px; }
+    .regime p { margin: 0; color: var(--muted); line-height: 1.5; }
+
+    .chart-wrap { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; margin-top: 16px; }
+    .chart-card { min-height: 330px; padding: 18px; border-radius: 24px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.08); }
+    .bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.09); overflow: hidden; margin: 10px 0 16px; }
+    .bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan), var(--violet)); }
+    .note { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .formula { font-size: clamp(28px, 4vw, 48px); font-weight: 900; letter-spacing: -.05em; margin: 12px 0; }
+
+    footer { padding: 36px 0 56px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    footer a { color: var(--cyan); }
+
+    @media (max-width: 860px) {
+      header { padding-top: 34px; }
+      .hero, .story, .chart-wrap { grid-template-columns: 1fr; }
+      .grid, .controls, .readout, .paper-grid, .equation-strip { grid-template-columns: 1fr; }
+      .metric-row, .compare { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <header class="hero">
+  <div class="grain" aria-hidden="true"></div>
+  <header>
     <nav>
-      <div class="brand"><span class="dot"></span> Superposition Scaling</div>
-      <div class="nav-links">
-        <a href="#paper-map">Paper map</a>
-        <a href="#interactive">Simulator</a>
-        <a href="#sources">Sources</a>
+      <div class="brand"><div class="mark" aria-hidden="true"></div> Scaling Laws Explainer</div>
+      <div class="links">
+        <a href="#idea">The idea</a>
+        <a href="#paper">Paper details</a>
+        <a href="#simulator">Simulator</a>
+        <a href="#implications">Implications</a>
       </div>
     </nav>
-    <section class="hero-grid">
+    <div class="hero">
       <div>
-        <p class="eyebrow">Interactive explainer for arXiv:2505.10465</p>
-        <h1>Why does scaling language models work so reliably?</h1>
-        <p class="lede">The paper’s answer is surprisingly geometric: models represent more features than they have dimensions, so meanings live in <strong>superposition</strong>. When that superposition is strong, error is dominated by vector overlap noise — and that noise falls roughly like <strong>1 / width</strong>.</p>
-        <div class="actions">
-          <a class="button primary" href="#interactive">Try the simulator</a>
-          <a class="button" href="#paper-map">Walk the paper</a>
+        <div class="pill">MIT / NeurIPS 2025 paper · arXiv:2505.10465</div>
+        <h1>Why bigger language models get better <span class="gradient">so reliably</span></h1>
+        <p class="lede">The short version: models pack more features than they have dimensions. That crowding creates predictable interference. Add width, reduce the interference, lower the loss.</p>
+        <div class="cta-row">
+          <a class="button" href="#simulator">Play with the geometry</a>
+          <a class="button secondary" href="#sources">Sources</a>
         </div>
       </div>
-      <div class="hero-card" aria-label="Summary card">
-        <span class="card-kicker">Core claim</span>
-        <div class="formula">L<sub>rep</sub> ∝ 1 / m</div>
-        <p>In strong superposition, representation loss decreases inversely with hidden dimension <em>m</em>, across many feature-frequency distributions.</p>
-        <div class="mini-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
-    </section>
+      <aside class="hero-card" aria-label="Animated vector packing visualization">
+        <canvas id="packing" width="720" height="520"></canvas>
+        <div class="metric-row">
+          <div class="metric"><b id="heroWidth">256</b><span>model width</span></div>
+          <div class="metric"><b id="heroOverlap">0.39%</b><span>avg overlap</span></div>
+          <div class="metric"><b id="heroLoss">1/m</b><span>loss term</span></div>
+        </div>
+      </aside>
+    </div>
   </header>
 
   <main>
-    <section id="paper-map" class="section">
-      <p class="eyebrow">Paper map</p>
-      <h2>The original paper in five moves</h2>
-      <div class="timeline">
-        <article>
-          <span>1</span>
-          <h3>The puzzle</h3>
-          <p>Neural scaling laws say larger models get lower loss in clean power-law patterns. But why should such a simple curve emerge from messy language data and huge transformers?</p>
+    <section id="idea">
+      <h2 class="section-title">The problem is geometric crowding.</h2>
+      <p class="section-copy">Language has far more tokens, facts, and latent concepts than a model has independent internal directions. So models do not give every feature a private axis. They place many features in the same space, almost orthogonal but not perfectly separate.</p>
+      <div class="grid">
+        <article class="card">
+          <div class="icon">📦</div>
+          <h3>Superposition</h3>
+          <p>Represent <em>n</em> features in only <em>m</em> dimensions. The vectors overlap slightly instead of being clean one-feature-per-axis slots.</p>
         </article>
-        <article>
-          <span>2</span>
-          <h3>The bottleneck</h3>
-          <p>LLMs need to represent tens of thousands of tokens — and likely many more abstract concepts — inside hidden spaces with only thousands of dimensions.</p>
+        <article class="card">
+          <div class="icon">〰️</div>
+          <h3>Interference</h3>
+          <p>Those tiny overlaps show up as noise in prediction. In strong superposition, the model stores broadly everything, but pays a crowding penalty.</p>
         </article>
-        <article>
-          <span>3</span>
+        <article class="card">
+          <div class="icon">📉</div>
+          <h3>Scaling law</h3>
+          <p>As width <em>m</em> grows, average interference falls roughly like <strong>1/m</strong>. That creates smooth power-law improvement.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="story">
+        <div class="story-card">
+          <h2 class="section-title">Two regimes, different stories.</h2>
+          <p class="section-copy">The paper distinguishes weak and strong superposition. Real LLM output layers look like the strong version.</p>
+          <div class="formula">loss ∝ 1 / width</div>
+          <p class="note">Not all loss, of course — just the model-size-dependent component caused by representation crowding. Parsing, data quality, optimization, and architecture still matter.</p>
+        </div>
+        <div class="timeline">
+          <div class="step"><div class="num">1</div><div><h3>Weak superposition</h3><p>The model keeps common features cleanly and drops rare ones. Scaling depends heavily on the data distribution: “power law in, power law out.”</p></div></div>
+          <div class="step"><div class="num">2</div><div><h3>Strong superposition</h3><p>The model represents nearly all features by allowing controlled overlap. Loss comes from interference, not from missing features.</p></div></div>
+          <div class="step"><div class="num">3</div><div><h3>LLM check</h3><p>OPT, GPT-2, Qwen2.5, and Pythia output layers show overlapping token vectors whose overlap shrinks at the predicted rate.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="paper">
+      <h2 class="section-title">What the paper actually adds.</h2>
+      <p class="section-copy">The original paper is not just “scaling laws happen because bigger models have more room.” It separates two mechanisms, then checks which one looks like modern LLMs.</p>
+      <div class="paper-grid">
+        <article class="paper-card">
           <h3>The toy model</h3>
-          <p>The authors adapt Anthropic’s toy model of superposition: sparse latent features are encoded into a lower-dimensional space and reconstructed through a learned matrix.</p>
+          <p>Data is built from many sparse latent features. Each feature has a frequency <em>pᵢ</em>; the model embeds <em>n</em> features into only <em>m</em> dimensions and reconstructs them. Weight decay is used as a dial: positive decay pushes toward weak/no superposition, while negative decay encourages unit-norm rows and strong superposition.</p>
+          <ul>
+            <li><strong>n</strong>: number of atomic features.</li>
+            <li><strong>m</strong>: representation width, with <em>m ≪ n</em>.</li>
+            <li><strong>ϕ₁/₂</strong>: fraction of feature vectors whose norm is meaningfully “on”.</li>
+          </ul>
         </article>
-        <article>
-          <span>4</span>
-          <h3>The regime split</h3>
-          <p>Weak superposition drops rare features; strong superposition keeps many/all features but lets their vectors overlap. Those two worlds scale differently.</p>
-        </article>
-        <article>
-          <span>5</span>
-          <h3>The LLM check</h3>
-          <p>Output layers of OPT, GPT-2, Qwen2.5, and Pythia look like the strong-superposition regime, with overlap-driven loss close to inverse-width scaling.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section split">
-      <div>
-        <p class="eyebrow">The intuition</p>
-        <h2>There are too many meanings and too little room.</h2>
-        <p>If a model had one independent dimension per feature, life would be easy: each feature could get a clean axis. LLMs do not have that luxury. A 50k-token vocabulary may be projected through a few thousand hidden dimensions, and the true feature set is probably larger than the vocabulary.</p>
-        <p>Superposition is the workaround: instead of assigning one axis per concept, the model packs many concepts into shared directions. The price is interference. The paper argues that, in today’s LLMs, that interference is not a nuisance around the edges — it is a central scaling mechanism.</p>
-      </div>
-      <div class="diagram-card">
-        <div class="space-box">
-          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-        </div>
-        <p><strong>More vectors than dimensions.</strong> Most pairs are almost orthogonal, but not perfectly. The leftover squared overlaps create predictable reconstruction error.</p>
-      </div>
-    </section>
-
-    <section class="section">
-      <p class="eyebrow">Methods, translated</p>
-      <h2>The toy model is a pressure chamber for representations.</h2>
-      <div class="cards three">
-        <article>
-          <span class="num">x</span>
-          <h3>Sparse feature data</h3>
-          <p>Each input is a vector of <em>n</em> latent features. Feature <em>i</em> activates with probability <em>pᵢ</em>, so features can be uniform, exponential, power-law, or otherwise skewed.</p>
-        </article>
-        <article>
-          <span class="num">W</span>
-          <h3>Compressed representation</h3>
-          <p>A learned matrix <em>W ∈ ℝⁿˣᵐ</em> maps those features into a hidden space with <em>m ≪ n</em>. Each row of <em>W</em> is the representation vector for one feature.</p>
-        </article>
-        <article>
-          <span class="num">L</span>
-          <h3>Reconstruction loss</h3>
-          <p>The model encodes and decodes the input, then measures reconstruction loss. Imperfect representation becomes a clean object to study.</p>
-        </article>
-      </div>
-      <div class="callout">
-        <strong>Translation:</strong> the toy model strips away transformer details so you can ask one question: how does loss change when a crowded representation space gets wider?
-      </div>
-    </section>
-
-    <section class="section split alt">
-      <div>
-        <p class="eyebrow">Two scaling stories</p>
-        <h2>Weak superposition is data-dependent. Strong superposition is geometric.</h2>
-        <p>The paper’s key contrast is not “superposition or no superposition.” It is <strong>weak</strong> versus <strong>strong</strong> superposition.</p>
-      </div>
-      <div class="compare">
-        <article>
+        <article class="paper-card">
           <h3>Weak superposition</h3>
-          <p class="tag bad">Drop the tail</p>
-          <p>The model represents the most frequent features cleanly and ignores rarer ones. Loss depends heavily on the feature-frequency distribution. Power-law data can create power-law loss; other distributions need not.</p>
+          <p>The model mostly represents the most frequent features and ignores the tail. Loss is dominated by the omitted features, so scaling only becomes a clean power law when the feature frequencies themselves follow a power law.</p>
+          <div class="formula">if pᵢ ∝ i<sup>−α</sup>, then loss ∝ m<sup>−(α−1)</sup></div>
         </article>
-        <article>
+        <article class="paper-card">
           <h3>Strong superposition</h3>
-          <p class="tag good">Pack everything</p>
-          <p>The model represents many or all features with nonzero overlaps. Loss mostly comes from squared vector overlaps, which shrink like <em>1 / m</em> for high-dimensional geometry.</p>
+          <p>The model represents far more features than dimensions by letting vectors overlap. For roughly isotropic vectors, squared overlap has mean about <strong>1/m</strong>. That geometric fact makes the loss-width curve robust even when the data distribution is not carefully tuned.</p>
+          <ul>
+            <li>Important rows become ETF-like: evenly spread with low overlap variance.</li>
+            <li>The relevant error is interference between represented features, not merely dropped features.</li>
+          </ul>
         </article>
+        <article class="paper-card">
+          <h3>LLM evidence</h3>
+          <p>The authors treat output-token rows in the language-model head as feature vectors. Across OPT, GPT-2, Qwen2.5, and Pythia families, normalized row overlaps fall close to <strong>1/m</strong>, and the model-size-dependent loss fit gives an exponent near one.</p>
+          <ul>
+            <li>Reported LLM fit: <strong>αₘ = 0.91 ± 0.04</strong>.</li>
+            <li>Chinchilla-derived width exponent: about <strong>0.88 ± 0.06</strong>.</li>
+          </ul>
+        </article>
+      </div>
+      <div class="equation-strip">
+        <div class="eq"><b>L = Cₘ / m<sup>αₘ</sup> + L\m</b><span>Separate model-width-dependent loss from irreducible/data/dataset terms.</span></div>
+        <div class="eq"><b>E[(wᵢ·wⱼ)²] ≈ 1/m</b><span>Core geometric reason strong superposition predicts smooth width scaling.</span></div>
+        <div class="eq"><b>m ≈ vocab ⇒ flattening</b><span>A naive stopping point: when private token directions become possible, overlap-limited gains should diminish.</span></div>
       </div>
     </section>
 
-    <section id="interactive" class="section interactive">
-      <div class="panel intro-panel">
-        <p class="eyebrow">Interactive toy model</p>
-        <h2>Watch overlap error shrink as width grows.</h2>
-        <p>This is an intuition simulator, not a reproduction of the MIT experiments. It shows the paper’s two error stories: dropped-tail error in weak superposition vs overlap error in strong superposition.</p>
-      </div>
-
-      <div class="sim-grid">
-        <div class="panel controls">
-          <label>
-            Model width <output id="widthOut">512</output>
-            <input id="width" type="range" min="64" max="8192" value="512" step="64" />
-          </label>
-          <label>
-            Number of features <output id="conceptOut">32000</output>
-            <input id="concepts" type="range" min="1000" max="100000" value="32000" step="1000" />
-          </label>
-          <label>
-            Frequency skew <output id="skewOut">0.90</output>
-            <input id="skew" type="range" min="0.2" max="1.6" value="0.9" step="0.05" />
-          </label>
-          <label>
-            Superposition strength <output id="strengthOut">0.85</output>
-            <input id="strength" type="range" min="0" max="1" value="0.85" step="0.01" />
-          </label>
-        </div>
-
-        <div class="panel chart-panel">
-          <canvas id="chart" width="900" height="520" aria-label="Scaling chart"></canvas>
-          <div class="legend">
-            <span><i class="strong"></i> strong superposition</span>
-            <span><i class="weak"></i> weak superposition</span>
+    <section id="simulator">
+      <div class="simulator">
+        <h2 class="section-title">Interactive mini-model</h2>
+        <p class="section-copy">Adjust how many features are squeezed into the model and how wide the representation is. The simulator uses the paper's core intuition: in strong superposition, interference scales approximately as feature crowding divided by width.</p>
+        <div class="controls">
+          <div>
+            <label for="features">Features to store: <span id="featuresVal">4096</span></label>
+            <input id="features" type="range" min="512" max="32768" step="512" value="4096" />
+          </div>
+          <div>
+            <label for="width">Model width: <span id="widthVal">1024</span></label>
+            <input id="width" type="range" min="128" max="8192" step="128" value="1024" />
+          </div>
+          <div>
+            <label for="skew">Feature frequency skew: <span id="skewVal">medium</span></label>
+            <input id="skew" type="range" min="1" max="3" step="1" value="2" />
           </div>
         </div>
-      </div>
-
-      <div class="metrics">
-        <article>
-          <span class="label">Strong-superposition error</span>
-          <strong id="strongMetric">—</strong>
-          <small>Overlap noise falls like ~1 / width.</small>
-        </article>
-        <article>
-          <span class="label">Weak-superposition error</span>
-          <strong id="weakMetric">—</strong>
-          <small>Dropped-tail error depends on frequency skew.</small>
-        </article>
-        <article>
-          <span class="label">Room pressure</span>
-          <strong id="pressureMetric">—</strong>
-          <small>Features per dimension.</small>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <p class="eyebrow">What the paper reports</p>
-      <h2>Actual LLMs match the strong-superposition picture.</h2>
-      <div class="evidence-grid">
-        <article>
-          <h3>Model families</h3>
-          <p>The authors analyze four open-source families: OPT, GPT-2, Qwen2.5, and Pythia, spanning roughly 100M to 70B parameters.</p>
-        </article>
-        <article>
-          <h3>Where they look</h3>
-          <p>They focus on the language-model head / output-layer representation vectors, where many token representations must fit inside the model dimension.</p>
-        </article>
-        <article>
-          <h3>What they measure</h3>
-          <p>They estimate representation overlap, vector norms, token frequencies, and evaluation loss to compare real models with toy-model predictions.</p>
-        </article>
-        <article>
-          <h3>Main quantitative fit</h3>
-          <p>The reported overlap-loss exponent is about 0.91, close to the theoretical inverse-width exponent of 1. Chinchilla-style scaling is also reported as consistent, around 0.88.</p>
-        </article>
+        <div class="chart-wrap">
+          <div class="chart-card"><canvas id="chart" width="760" height="420" aria-label="Scaling chart"></canvas></div>
+          <div class="chart-card">
+            <div class="readout">
+              <div><strong id="crowding">4.0×</strong><span>features per dimension</span></div>
+              <div><strong id="interference">0.39%</strong><span>strong-regime interference</span></div>
+              <div><strong id="gain">2.0×</strong><span>gain if width doubles</span></div>
+              <div><strong id="ceiling">far</strong><span>distance to no-overlap ceiling</span></div>
+            </div>
+            <p class="note">When width approaches the number of represented features, private directions become possible and this particular power law should flatten.</p>
+            <div class="bar" aria-hidden="true"><span id="ceilingBar" style="width: 25%"></span></div>
+          </div>
+        </div>
+        <div class="compare">
+          <article id="weakCard" class="regime"><h3>Weak regime</h3><p id="weakText">Drops the tail. Scaling gets steeper only when the data distribution is very skewed.</p></article>
+          <article id="strongCard" class="regime active"><h3>Strong regime</h3><p>Stores the long tail too. More universal: width reduces overlap noise at roughly 1/m.</p></article>
+        </div>
       </div>
     </section>
 
-    <section class="section implications">
-      <p class="eyebrow">Implications and limits</p>
-      <h2>What changes if this is right?</h2>
-      <ul>
-        <li><strong>Scaling has a mechanistic story:</strong> bigger models reduce representation interference, not just memorize more or fit smoother functions.</li>
-        <li><strong>Packing quality matters:</strong> architectures or training methods that reduce harmful overlap could improve performance at fixed compute.</li>
-        <li><strong>Interpretability stays hard:</strong> concepts are not stored as clean independent neurons or axes; they are entangled in shared directions.</li>
-        <li><strong>There may be a regime change:</strong> once representation is no longer the bottleneck, the clean inverse-width story may stop dominating.</li>
-        <li><strong>It is not the whole LLM:</strong> the toy model isolates representation learning. Transformer-layer skills, data quality, optimization, and compute still matter.</li>
-      </ul>
-    </section>
-
-    <section id="sources" class="section sources">
-      <p class="eyebrow">Sources</p>
-      <h2>Built from the paper, with light synthesis</h2>
-      <p>Primary source: <a href="https://arxiv.org/abs/2505.10465">arXiv:2505.10465 — “Superposition Yields Robust Neural Scaling”</a> by Yizhou Liu, Ziming Liu, and Jeff Gore, MIT.</p>
-      <p>Code source cited by the authors: <a href="https://github.com/liuyz0/SuperpositionScaling">liuyz0/SuperpositionScaling</a>.</p>
-      <p>Background framing also cross-checked against the earlier summary from <a href="https://the-decoder.com/mit-study-explains-why-scaling-language-models-works-so-reliably/">The Decoder</a>.</p>
+    <section id="implications">
+      <h2 class="section-title">So what follows?</h2>
+      <div class="grid">
+        <article class="card"><div class="icon">✅</div><h3>Scaling has a mechanism</h3><p>It is not magic. If loss comes partly from vector interference, adding dimensions has a predictable payoff.</p></article>
+        <article class="card"><div class="icon">🏁</div><h3>There is a ceiling</h3><p>Once width is comparable to vocabulary/features, overlap-driven gains should diminish. Other bottlenecks take over.</p></article>
+        <article class="card"><div class="icon">🔍</div><h3>Interpretability gets harder</h3><p>Dense superposition improves packing efficiency, but overlapping concepts make circuits and features less clean to trace.</p></article>
+      </div>
+      <div class="paper-grid" style="margin-top:16px">
+        <article class="paper-card"><h3>How scaling might improve</h3><p>The paper is cautious: natural language probably cannot beat the power law just by changing width, but very skewed domain tasks might. Training or architecture choices that encourage useful superposition may lower constants — smaller models behaving like larger ones — even if the exponent does not change.</p></article>
+        <article class="paper-card"><h3>What this does not explain</h3><p>The analysis focuses on representation loss, especially width. It does not fully solve parsing loss in transformer layers, dataset-size scaling, training-step scaling, or why LLMs land in strong superposition. Those are explicitly left as open directions.</p></article>
+      </div>
     </section>
   </main>
 
-  <footer>
-    <p>Static explainer. No tracking. Made for quick paper comprehension.</p>
+  <footer id="sources">
+    <strong>Sources:</strong> Yizhou Liu, Ziming Liu, and Jeff Gore, “<a href="https://arxiv.org/abs/2505.10465">Superposition Yields Robust Neural Scaling</a>” (arXiv:2505.10465; NeurIPS 2025 Best Paper Runner-up), the authors' <a href="https://github.com/liuyz0/SuperpositionScaling">code repository</a>, and The Decoder article “MIT study explains why scaling language models works so reliably.” This app is an explanatory abstraction, not a substitute for the paper's formal derivations.
   </footer>
 
-  <script src="app.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const packing = $('packing');
+    const pctx = packing.getContext('2d');
+    const chart = $('chart');
+    const cctx = chart.getContext('2d');
+    const features = $('features');
+    const width = $('width');
+    const skew = $('skew');
+    const skewNames = {1: 'flat', 2: 'medium', 3: 'steep'};
+
+    function fmt(n) { return n >= 1000 ? Math.round(n).toLocaleString() : String(Math.round(n)); }
+    function pct(n) { return (n * 100).toFixed(n < 0.01 ? 2 : 1) + '%'; }
+
+    function drawPacking(t = 0) {
+      const w = packing.width, h = packing.height;
+      pctx.clearRect(0,0,w,h);
+      const cx = w/2, cy = h/2;
+      const modelWidth = +width.value;
+      const count = Math.min(90, Math.max(24, Math.floor(+features.value / 256)));
+      const radius = Math.min(w,h) * .36;
+      pctx.strokeStyle = 'rgba(255,255,255,.09)';
+      pctx.lineWidth = 1;
+      for (let r=radius/4; r<=radius; r+=radius/4) {
+        pctx.beginPath(); pctx.arc(cx, cy, r, 0, Math.PI*2); pctx.stroke();
+      }
+      for (let i=0; i<count; i++) {
+        const a = (i * 2.399963 + t * .00025) % (Math.PI * 2);
+        const len = radius * (.42 + .58 * ((i * 37) % 100) / 100);
+        const crowd = Math.min(1, +features.value / Math.max(+width.value, 1) / 10);
+        const wobble = Math.sin(t*.001 + i) * crowd * .22;
+        const x = cx + Math.cos(a + wobble) * len;
+        const y = cy + Math.sin(a + wobble) * len;
+        const hue = 185 + (i % 38) * 4;
+        pctx.strokeStyle = `hsla(${hue}, 95%, 70%, ${.25 + crowd*.45})`;
+        pctx.lineWidth = 1.4;
+        pctx.beginPath(); pctx.moveTo(cx,cy); pctx.lineTo(x,y); pctx.stroke();
+        pctx.fillStyle = `hsla(${hue}, 95%, 70%, .9)`;
+        pctx.beginPath(); pctx.arc(x,y, 3.2, 0, Math.PI*2); pctx.fill();
+      }
+      pctx.fillStyle = 'rgba(237,247,255,.9)';
+      pctx.font = '800 26px Inter, sans-serif';
+      pctx.fillText('features packed into shared directions', 28, 48);
+      pctx.fillStyle = 'rgba(157,178,194,.92)';
+      pctx.font = '15px Inter, sans-serif';
+      pctx.fillText('more width → more room → less overlap noise', 30, 76);
+    }
+
+    function drawChart() {
+      const W = chart.width, H = chart.height;
+      cctx.clearRect(0,0,W,H);
+      const pad = {l: 58, r: 24, t: 28, b: 52};
+      cctx.strokeStyle = 'rgba(255,255,255,.13)';
+      cctx.lineWidth = 1;
+      for (let i=0; i<=4; i++) {
+        const y = pad.t + (H-pad.t-pad.b) * i/4;
+        cctx.beginPath(); cctx.moveTo(pad.l, y); cctx.lineTo(W-pad.r, y); cctx.stroke();
+      }
+      cctx.fillStyle = 'rgba(157,178,194,.95)';
+      cctx.font = '13px Inter, sans-serif';
+      cctx.fillText('relative loss', 8, 34);
+      cctx.fillText('width m', W-86, H-16);
+
+      const f = +features.value;
+      const current = +width.value;
+      const k = Math.max(1, f / 4096) * .8;
+      const xs = [128,256,512,1024,2048,4096,8192];
+      const maxY = k / 128;
+      const points = xs.map(x => ({x, y: k / x}));
+      const mapX = x => pad.l + (Math.log2(x)-7)/(13-7) * (W-pad.l-pad.r);
+      const mapY = y => pad.t + (1 - y/maxY) * (H-pad.t-pad.b);
+
+      cctx.strokeStyle = '#63e8ff';
+      cctx.lineWidth = 4;
+      cctx.beginPath();
+      points.forEach((p,i) => { const x=mapX(p.x), y=mapY(p.y); i ? cctx.lineTo(x,y) : cctx.moveTo(x,y); });
+      cctx.stroke();
+      cctx.fillStyle = '#63e8ff';
+      points.forEach(p => { cctx.beginPath(); cctx.arc(mapX(p.x), mapY(p.y), 4, 0, Math.PI*2); cctx.fill(); });
+
+      const cx = mapX(current);
+      cctx.strokeStyle = 'rgba(255,211,109,.9)';
+      cctx.lineWidth = 2;
+      cctx.setLineDash([7,7]);
+      cctx.beginPath(); cctx.moveTo(cx, pad.t); cctx.lineTo(cx, H-pad.b); cctx.stroke();
+      cctx.setLineDash([]);
+      cctx.fillStyle = '#ffd36d';
+      cctx.font = '800 14px Inter, sans-serif';
+      cctx.fillText('current width', Math.min(cx+10, W-130), pad.t+20);
+
+      cctx.fillStyle = 'rgba(237,247,255,.92)';
+      cctx.font = '800 18px Inter, sans-serif';
+      cctx.fillText('Strong superposition: loss term follows ~1/m', pad.l, pad.t + 8);
+    }
+
+    function update() {
+      const f = +features.value;
+      const m = +width.value;
+      const crowd = f / m;
+      const interference = Math.min(.99, crowd / m);
+      const ceiling = Math.min(1, m / f);
+      const regimeStrong = crowd > 1.2;
+      $('featuresVal').textContent = fmt(f);
+      $('widthVal').textContent = fmt(m);
+      $('skewVal').textContent = skewNames[skew.value];
+      $('crowding').textContent = crowd.toFixed(1) + '×';
+      $('interference').textContent = pct(interference);
+      $('gain').textContent = '2.0×';
+      $('ceiling').textContent = ceiling > .85 ? 'near' : ceiling > .35 ? 'mid' : 'far';
+      $('ceilingBar').style.width = Math.max(4, ceiling*100) + '%';
+      $('heroWidth').textContent = fmt(m);
+      $('heroOverlap').textContent = pct(1 / m);
+      $('weakText').textContent = +skew.value === 3 ? 'With steep feature frequencies, dropping the tail can also look power-law-like.' : 'With flatter language-like frequencies, dropping the tail is a brittle explanation.';
+      $('strongCard').classList.toggle('active', regimeStrong);
+      $('weakCard').classList.toggle('active', !regimeStrong);
+      drawChart();
+      drawPacking(performance.now());
+    }
+
+    [features, width, skew].forEach(el => el.addEventListener('input', update));
+    function animate(t) { drawPacking(t); requestAnimationFrame(animate); }
+    update();
+    requestAnimationFrame(animate);
+  </script>
 </body>
 </html>
